@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StreamPulse — Ask the Spotify data</title>
+<style>
+  :root{--bg:#f6f7f8;--card:#fff;--ink:#16181d;--mute:#6b7280;--line:#e5e7eb;--accent:#1db954;--user:#16181d;--bot:#f0f2f4}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f1114;--card:#171a1f;--ink:#eceef1;--mute:#98a1ad;--line:#262b33;--user:#1db954;--bot:#20242b}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:820px;margin:0 auto;padding:20px 16px 110px}
+  h1{font-size:22px;margin:8px 0 4px} .sub{color:var(--mute);margin:0 0 14px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 18px}
+  .chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 13px;cursor:pointer;font:inherit}
+  .chip:hover{border-color:var(--accent)}
+  .msg{display:flex;flex-direction:column;margin:12px 0}
+  .bubble{max-width:88%;padding:11px 15px;border-radius:16px;overflow-wrap:anywhere}
+  .user .bubble{align-self:flex-end;background:var(--user);color:#fff;border-bottom-right-radius:4px}
+  .bot .bubble{align-self:flex-start;background:var(--bot);border-bottom-left-radius:4px}
+  .bubble p{margin:0 0 .6em}.bubble p:last-child{margin:0}.bubble ul,.bubble ol{margin:.4em 0;padding-left:1.3em}
+  .meta{font-size:12px;color:var(--mute);margin:4px 4px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .badge{border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+  .badge.sql{color:#0a7a35;border-color:#0a7a35}.badge.semantic{color:#2563eb;border-color:#2563eb}.badge.gate{color:#b45309;border-color:#b45309}
+  details summary{cursor:pointer;color:var(--mute)} details ul{margin:6px 0 0;padding-left:18px}
+  form{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(transparent,var(--bg) 35%);padding:26px 16px 16px}
+  .bar{max-width:820px;margin:0 auto;display:flex;gap:8px}
+  input{flex:1;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit}
+  input:focus{outline:2px solid var(--accent);outline-offset:1px}
+  button.send{border:0;border-radius:12px;padding:0 20px;background:var(--accent);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+  button.send:disabled{opacity:.5;cursor:default}
+  .foot{color:var(--mute);font-size:12.5px;margin-top:26px}.foot a{color:inherit}
+  .dots span{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:var(--mute);animation:b 1s infinite}
+  .dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+  @keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.dots span{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎧 StreamPulse</h1>
+  <p class="sub">Ask questions about Spotify streaming by country, artist and label. Answers come from real chart data — exact numbers via SQL, descriptions via semantic search, and a refusal when the data can't support an answer.</p>
+  <div class="chips" id="chips"></div>
+  <div id="log" aria-live="polite"></div>
+  <p class="foot">Demo of the <a href="https://github.com/tyxgx/streampulse" target="_blank" rel="noopener">StreamPulse</a> RAG chatbot · 216K embedded chunks · retrieval re-hosted on int8 vectors + SQLite + DuckDB · <a href="https://tyxgx.github.io/portfolio/" target="_blank" rel="noopener">Portfolio</a></p>
+</div>
+<form id="f"><div class="bar"><input id="q" maxlength="400" autocomplete="off" placeholder="e.g. Top 5 artists in 2024" aria-label="Your question"><button class="send" id="go">Ask</button></div></form>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script>
+const EX=["How is India doing?","Total streams for United States in 2024","Top 5 countries by streams","Top 5 artists in 2024","How many artists are in the data?","What is the weather in Delhi?"];
+const $=id=>document.getElementById(id), log=$('log'), q=$('q'), go=$('go');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const md=t=>window.marked&&window.DOMPurify?DOMPurify.sanitize(marked.parse(t)):esc(t);
+EX.forEach(t=>{const b=document.createElement('button');b.className='chip';b.type='button';b.textContent=t;b.onclick=()=>ask(t);$('chips').appendChild(b)});
+function add(cls,html){const m=document.createElement('div');m.className='msg '+cls;m.innerHTML=html;log.appendChild(m);m.scrollIntoView({block:'end',behavior:'smooth'});return m}
+async function ask(text){
+  text=(text||q.value).trim(); if(!text) return; q.value=''; go.disabled=true;
+  add('user','<div class="bubble">'+esc(text)+'</div>');
+  const w=add('bot','<div class="bubble"><span class="dots"><span></span><span></span><span></span></span></div>');
+  try{
+    const r=await fetch('/api/ask',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:text})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.detail||'Request failed');
+    const label={sql:'exact · SQL',semantic:'semantic search',gate:'refused · low confidence',chat:'chat',error:'error'}[d.route]||d.route;
+    let src=''; if(d.sources&&d.sources.length) src='<details><summary>Sources ('+d.sources.length+')</summary><ul>'+d.sources.map(s=>'<li>'+esc(s.table)+' · '+esc(s.key)+' · distance '+s.distance+'</li>').join('')+'</ul></details>';
+    w.innerHTML='<div class="bubble">'+md(d.answer)+'</div><div class="meta"><span class="badge '+d.route+'">'+label+'</span><span>'+(d.cached?'cached':(d.ms/1000).toFixed(1)+' s')+'</span>'+src+'</div>';
+  }catch(e){w.innerHTML='<div class="bubble">⚠️ '+esc(e.message)+'</div>'}
+  go.disabled=false; q.focus(); w.scrollIntoView({block:'end',behavior:'smooth'});
+}
+$('f').onsubmit=e=>{e.preventDefault();ask()};
+</script>
+</body>
+</html>
