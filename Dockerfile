@@ -12,7 +12,7 @@ RUN python -c "from fastembed import TextEmbedding; TextEmbedding('sentence-tran
 ARG DATA_URL=https://github.com/tyxgx/streampulse-demo/releases/download/data-v1
 RUN mkdir data && python -c "import urllib.request as u; b='$DATA_URL'; [u.urlretrieve(f'{b}/{f}', f'data/{f}') for f in 'chunks_q8.npy norms_sq.npy meta.json chunks.sqlite country.parquet artist.parquet label.parquet song.parquet'.split()]"
 
-COPY server.py retrieval.py sql_layer.py llm.py ./
+COPY server.py retrieval.py sql_layer.py llm.py precomputed.json ./
 COPY static static
 
 EXPOSE 8000

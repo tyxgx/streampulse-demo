@@ -1,0 +1,58 @@
+{
+ "how is india doing?": {
+  "answer": "India\u2019s Spotify landscape has been expanding rapidly, with a steady rise in total streams, active artists, and chart strength over the past few years.\n\n- **Total streams** grew from **3.3B** in 2020 to **22.4B** in 2025, a more than **7\u2011fold increase**.  \n- **Active artists** increased from **279** in 2020 to **366** in 2025, while the **average growth rate** of artists peaked at **204.69%** in 2019 and has since stabilized around **2\u20136%**.  \n- **Chart strength** climbed from **149.46** in 2020 to **220.62** in 2025, indicating stronger performance of top tracks.  \n- The **most recent top songs** shifted from *Titliaan* (2020) to *Sahiba* (2025), with *Arijit Singh* consistently topping the artist list from 2019 through 2025.  \n\nOverall, India\u2019s streaming market is growing robustly, with higher engagement and a widening pool of active artists.",
+  "route": "semantic",
+  "sources": [
+   {
+    "table": "country_performance",
+    "key": "India|2021",
+    "distance": 1.198
+   },
+   {
+    "table": "country_performance",
+    "key": "India|2022",
+    "distance": 1.199
+   },
+   {
+    "table": "country_performance",
+    "key": "India|2025",
+    "distance": 1.206
+   },
+   {
+    "table": "country_performance",
+    "key": "India|2020",
+    "distance": 1.218
+   },
+   {
+    "table": "country_performance",
+    "key": "India|2019",
+    "distance": 1.22
+   }
+  ]
+ },
+ "total streams for united states in 2024": {
+  "answer": "Total streams for **United States in 2024**: **43.81B**.",
+  "route": "sql",
+  "sources": []
+ },
+ "top 5 countries by streams": {
+  "answer": "Here's the top 5 countries by streams:\n\n1. **United States** \u2014 301.87B\n2. **Mexico** \u2014 158.41B\n3. **Brazil** \u2014 150.74B\n4. **Indonesia** \u2014 93.13B\n5. **India** \u2014 90.82B",
+  "route": "sql",
+  "sources": []
+ },
+ "top 5 artists in 2024": {
+  "answer": "Here's the top 5 artists by streams in 2024:\n\n1. **Taylor Swift** \u2014 5.07B\n2. **Peso Pluma** \u2014 4.88B\n3. **Sabrina Carpenter** \u2014 4.83B\n4. **Billie Eilish** \u2014 4.14B\n5. **Feid** \u2014 3.84B",
+  "route": "sql",
+  "sources": []
+ },
+ "how many artists are in the data?": {
+  "answer": "There are **59,776** distinct artists in the data.",
+  "route": "sql",
+  "sources": []
+ },
+ "what is the weather in delhi?": {
+  "answer": "I don't have data to answer that.",
+  "route": "gate",
+  "sources": []
+ }
+}

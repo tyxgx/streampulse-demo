@@ -40,6 +40,13 @@ _cache_lock = threading.Lock()
 _hits = defaultdict(deque)
 RATE_PER_MIN = 15
 
+# Answers for the example chips are precomputed so the demo is instant even on a 0.1-CPU free host.
+_PRE = Path(__file__).parent / "precomputed.json"
+if _PRE.exists():
+    import json
+    for _q, _r in json.load(open(_PRE)).items():
+        _cache[_q] = {**_r, "ms": 0}
+
 
 class Ask(BaseModel):
     question: str = Field(min_length=1, max_length=400)
