@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image (same Dockerfile Render uses)
+        run: docker build -t streampulse-demo .
+      - name: Run under the free-tier memory limit
+        run: docker run -d --name app --memory=512m --memory-swap=512m -p 8000:8000 streampulse-demo
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do curl -sf localhost:8000/health && exit 0; sleep 2; done
+          docker logs app; exit 1
+      - name: Smoke test (no LLM key needed for SQL route and confidence gate)
+        run: |
+          ask() { curl -sf -X POST localhost:8000/api/ask -H 'content-type: application/json' -d "{\"question\":\"$1\"}"; }
+          ask "How many countries are in the data?" | tee /dev/stderr | grep -q '"route":"sql"'
+          ask "Top 5 artists in 2024" | tee /dev/stderr | grep -q 'Taylor Swift'
+          ask "What is the weather in Delhi?" | tee /dev/stderr | grep -q '"route":"gate"'
+      - name: Memory + logs
+        if: always()
+        run: |
+          docker stats --no-stream app
+          docker inspect app --format 'OOMKilled={{.State.OOMKilled}}'
+          docker logs app | tail -20
